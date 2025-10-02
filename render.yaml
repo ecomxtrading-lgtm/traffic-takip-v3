@@ -21,8 +21,6 @@ services:
   - type: pserv
     name: traffic-takip-postgres
     plan: free
-    databaseName: traffic_takip
-    user: traffic_takip_user
 
   - type: redis
     name: traffic-takip-redis
