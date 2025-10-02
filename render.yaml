@@ -6,17 +6,6 @@ services:
     buildCommand: pnpm install && pnpm run build
     startCommand: pnpm start
     healthCheckPath: /api/v1/health
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 3000
-      - key: HOST
-        value: 0.0.0.0
-      - key: LOG_LEVEL
-        value: info
-      - key: LOG_PRETTY
-        value: false
 
   - type: pserv
     name: traffic-takip-postgres
