@@ -1,8 +1,0 @@
-services:
-  - type: web
-    name: traffic-takip-app
-    env: node
-    plan: free
-    buildCommand: pnpm install && pnpm run build
-    startCommand: pnpm start
-    healthCheckPath: /api/v1/health
