@@ -6,13 +6,3 @@ services:
     buildCommand: pnpm install && pnpm run build
     startCommand: pnpm start
     healthCheckPath: /api/v1/health
-
-  - type: pserv
-    name: traffic-takip-postgres
-    plan: free
-    runtime: postgresql
-
-  - type: pserv
-    name: traffic-takip-redis
-    plan: free
-    runtime: redis
