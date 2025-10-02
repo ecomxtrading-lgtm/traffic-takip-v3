@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: traffic-takip-postgres
+    environment:
+      POSTGRES_DB: universal_tracking
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - traffic-takip-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: traffic-takip-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - traffic-takip-network
+
+  # ClickHouse Analytics Database
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8
+    container_name: traffic-takip-clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    networks:
+      - traffic-takip-network
+
+  # Redis Commander (Web UI for Redis)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: traffic-takip-redis-commander
+    ports:
+      - "8081:8081"
+    environment:
+      REDIS_HOSTS: "local:redis:6379"
+    depends_on:
+      - redis
+    networks:
+      - traffic-takip-network
+
+  # Application
+  app:
+    build: .
+    container_name: traffic-takip-app
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      HOST: 0.0.0.0
+      SITE_SALT: "my-super-secret-salt-for-development-that-is-very-long-and-secure-12345"
+      JWT_SECRET: "my-super-secret-jwt-key-for-development-that-is-very-long-and-secure-67890"
+      HMAC_SECRET: "my-super-secret-hmac-key-for-development-that-is-very-long-and-secure-abcdef"
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DATABASE: universal_tracking
+      PG_USERNAME: postgres
+      PG_PASSWORD: password
+      PG_SSL: false
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      REDIS_DB: 0
+      REDIS_KEY_PREFIX: "ut:"
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
+      CLICKHOUSE_DATABASE: analytics
+      CLICKHOUSE_USERNAME: default
+      CLICKHOUSE_PASSWORD: ""
+      CLICKHOUSE_SSL: false
+    depends_on:
+      - postgres
+      - redis
+      - clickhouse
+    networks:
+      - traffic-takip-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  clickhouse_data:
+
+networks:
+  traffic-takip-network:
+    driver: bridge
