@@ -13,34 +13,10 @@ services:
         value: 3000
       - key: HOST
         value: 0.0.0.0
-      - key: SITE_SALT
-        value: "your-production-salt-here"
-      - key: JWT_SECRET
-        value: "your-production-jwt-secret-here"
-      - key: HMAC_SECRET
-        value: "your-production-hmac-secret-here"
-      - key: PG_SSL
-        value: "true"
-      - key: REDIS_DB
-        value: "0"
-      - key: REDIS_KEY_PREFIX
-        value: "ut:"
-      - key: CLICKHOUSE_HOST
-        value: "your-clickhouse-host"
-      - key: CLICKHOUSE_PORT
-        value: "8123"
-      - key: CLICKHOUSE_DATABASE
-        value: "analytics"
-      - key: CLICKHOUSE_USERNAME
-        value: "default"
-      - key: CLICKHOUSE_PASSWORD
-        value: "your-clickhouse-password"
-      - key: CLICKHOUSE_SSL
-        value: "true"
       - key: LOG_LEVEL
-        value: "info"
+        value: info
       - key: LOG_PRETTY
-        value: "false"
+        value: false
 
   - type: pserv
     name: traffic-takip-postgres
