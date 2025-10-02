@@ -1,0 +1,88 @@
+services:
+  - type: web
+    name: traffic-takip-app
+    env: node
+    plan: free
+    buildCommand: pnpm install && pnpm run build
+    startCommand: pnpm start
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: HOST
+        value: 0.0.0.0
+      - key: SITE_SALT
+        generateValue: true
+      - key: JWT_SECRET
+        generateValue: true
+      - key: HMAC_SECRET
+        generateValue: true
+      - key: PG_HOST
+        fromDatabase:
+          name: traffic-takip-postgres
+          property: host
+      - key: PG_PORT
+        fromDatabase:
+          name: traffic-takip-postgres
+          property: port
+      - key: PG_DATABASE
+        fromDatabase:
+          name: traffic-takip-postgres
+          property: database
+      - key: PG_USERNAME
+        fromDatabase:
+          name: traffic-takip-postgres
+          property: user
+      - key: PG_PASSWORD
+        fromDatabase:
+          name: traffic-takip-postgres
+          property: password
+      - key: PG_SSL
+        value: "true"
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: traffic-takip-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: traffic-takip-redis
+          property: port
+      - key: REDIS_PASSWORD
+        fromService:
+          type: redis
+          name: traffic-takip-redis
+          property: password
+      - key: REDIS_DB
+        value: "0"
+      - key: REDIS_KEY_PREFIX
+        value: "ut:"
+      - key: CLICKHOUSE_HOST
+        value: "your-clickhouse-host"
+      - key: CLICKHOUSE_PORT
+        value: "8123"
+      - key: CLICKHOUSE_DATABASE
+        value: "analytics"
+      - key: CLICKHOUSE_USERNAME
+        value: "default"
+      - key: CLICKHOUSE_PASSWORD
+        value: "your-clickhouse-password"
+      - key: CLICKHOUSE_SSL
+        value: "true"
+      - key: LOG_LEVEL
+        value: "info"
+      - key: LOG_PRETTY
+        value: "false"
+
+  - type: pserv
+    name: traffic-takip-postgres
+    plan: free
+    databaseName: traffic_takip
+    user: traffic_takip_user
+
+  - type: redis
+    name: traffic-takip-redis
+    plan: free
