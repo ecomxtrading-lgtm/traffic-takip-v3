@@ -85,6 +85,16 @@ async function testDatabaseConnections(): Promise<void> {
     console.log('❌ PostgreSQL connection failed - crashing the app');
     throw new Error('PostgreSQL connection failed');
   }
+
+  // Test Redis connection (non-blocking)
+  try {
+    const redis = container.resolve<Redis>(TOKENS.REDIS_CLIENT);
+    await redis.ping();
+    console.log('✅ Redis connection successful');
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.warn('⚠️  Redis connection failed, but continuing without Redis:', errorMessage);
+  }
 }
 
 /**
