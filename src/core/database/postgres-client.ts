@@ -23,18 +23,37 @@ export function createPgClient(): Pool {
 
   console.log('🔗 Creating PostgreSQL connection...');
   
-  pool = new Pool({
+  // Enhanced PostgreSQL configuration for Railway/Supabase
+  const poolConfig = {
     host: env.PGHOST,
     port: env.PGPORT,
     database: env.PG_DATABASE,
     user: env.PGUSER,
     password: env.PGPASSWORD,
-    ssl: env.PG_SSL ? { rejectUnauthorized: false } : false,
-    min: env.PG_POOL_MIN || 2,
-    max: env.PG_POOL_MAX || 10,
+    ssl: env.PG_SSL ? { 
+      rejectUnauthorized: false,
+      // Additional SSL options for Supabase/Railway
+      checkServerIdentity: () => undefined
+    } : false,
+    min: env.PG_POOL_MIN || 1, // Reduced for Railway
+    max: env.PG_POOL_MAX || 5, // Reduced for Railway
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
-  });
+    connectionTimeoutMillis: 30000, // Increased timeout
+    // Force IPv4 connection
+    family: 4,
+    // Additional connection options
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 10000,
+  };
+
+  console.log('🔧 PostgreSQL Pool Configuration:');
+  console.log('  Host:', poolConfig.host);
+  console.log('  Port:', poolConfig.port);
+  console.log('  SSL:', poolConfig.ssl ? 'Enabled' : 'Disabled');
+  console.log('  IPv4 Force:', poolConfig.family === 4 ? 'Yes' : 'No');
+  console.log('  Connection Timeout:', poolConfig.connectionTimeoutMillis + 'ms');
+
+  pool = new Pool(poolConfig);
 
   pool.on('connect', () => {
     console.log('✅ PostgreSQL client connected');
@@ -55,11 +74,27 @@ export function createPgClient(): Pool {
 export async function testPgConnection(): Promise<boolean> {
   try {
     const client = createPgClient();
-    const result = await client.query('SELECT NOW() as current_time');
+    
+    // Test with a simple query and timeout
+    const result = await Promise.race([
+      client.query('SELECT NOW() as current_time'),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Connection test timeout')), 15000)
+      )
+    ]) as any;
+    
     console.log('✅ PostgreSQL connection test successful:', result.rows[0]);
     return true;
   } catch (error) {
-    console.error('❌ PostgreSQL connection test failed:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('❌ PostgreSQL connection test failed:', errorMessage);
+    
+    // Additional debugging for Railway/Supabase
+    if (errorMessage.includes('ENETUNREACH')) {
+      console.log('🔧 Network unreachable - possible IPv6/IPv4 issue');
+      console.log('💡 Railway might need IPv4-only connection');
+    }
+    
     return false;
   }
 }

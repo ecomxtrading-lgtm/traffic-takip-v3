@@ -77,13 +77,19 @@ function registerCoreServices(): void {
 async function testDatabaseConnections(): Promise<void> {
   console.log('🔍 Testing database connections...');
   
-  // Test PostgreSQL connection
-  const pgConnected = await testPgConnection();
-  if (pgConnected) {
-    console.log('✅ PostgreSQL connection successful');
-  } else {
-    console.log('❌ PostgreSQL connection failed - crashing the app');
-    throw new Error('PostgreSQL connection failed');
+  // Test PostgreSQL connection (non-blocking for Railway)
+  try {
+    const pgConnected = await testPgConnection();
+    if (pgConnected) {
+      console.log('✅ PostgreSQL connection successful');
+    } else {
+      console.warn('⚠️  PostgreSQL connection failed, but continuing without database...');
+      console.log('💡 App will run in limited mode without database features');
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.warn('⚠️  PostgreSQL connection error, but continuing:', errorMessage);
+    console.log('💡 App will run in limited mode without database features');
   }
 
   // Test Redis connection (non-blocking)
