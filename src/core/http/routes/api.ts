@@ -31,6 +31,10 @@ export async function registerApiRoutes(fastify: FastifyInstance): Promise<void>
     return { status: 'healthy', timestamp: Date.now() };
   });
 
+  fastify.get('/api/v1/health', async () => {
+    return { status: 'healthy', timestamp: Date.now() };
+  });
+
   fastify.get('/ready', async () => {
     return { status: 'ready' };
   });
