@@ -65,7 +65,8 @@ function registerCoreServices(): void {
 
   // Register database clients
   container.singleton(TOKENS.PG_CLIENT, () => createPgClient());
-  container.singleton(TOKENS.REDIS_CLIENT, () => createRedisClient());
+  // Redis temporarily disabled due to connection loop issues
+  // container.singleton(TOKENS.REDIS_CLIENT, () => createRedisClient());
   // container.singleton(TOKENS.CLICKHOUSE_CLIENT, () => createClickHouseClient());
 
   console.log('📦 Core services registered');
@@ -92,22 +93,9 @@ async function testDatabaseConnections(): Promise<void> {
     console.log('💡 App will run in limited mode without database features');
   }
 
-  // Test Redis connection (non-blocking)
-  try {
-    const redis = container.resolve<Redis>(TOKENS.REDIS_CLIENT);
-    
-    // Test with timeout to avoid hanging
-    const pingPromise = redis.ping();
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Redis ping timeout')), 5000)
-    );
-    
-    await Promise.race([pingPromise, timeoutPromise]);
-    console.log('✅ Redis connection successful');
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.warn('⚠️  Redis connection failed, but continuing without Redis:', errorMessage);
-  }
+  // Redis temporarily disabled due to connection loop issues
+  console.log('⚠️  Redis temporarily disabled - connection loop issues');
+  console.log('💡 App will run without Redis caching features');
 }
 
 /**
@@ -122,8 +110,9 @@ function setupGracefulShutdown(): void {
       eventBus.emit('server.shutdown', { signal });
       
       // Close database connections
-      const redis = container.resolve<Redis>(TOKENS.REDIS_CLIENT);
-      await closeRedisClient(redis);
+      // Redis temporarily disabled
+      // const redis = container.resolve<Redis>(TOKENS.REDIS_CLIENT);
+      // await closeRedisClient(redis);
       
       // Close PostgreSQL connection
       await closePgClient();
