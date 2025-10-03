@@ -12,15 +12,15 @@ import { env } from '../config/env.js';
 export function createRedisClient(): Redis {
   // Debug: Environment variables'ı logla
   console.log('🔍 Redis Environment Variables:');
-  console.log('  REDIS_HOST:', env.REDIS_HOST);
-  console.log('  REDIS_PORT:', env.REDIS_PORT);
-  console.log('  REDIS_PASSWORD:', env.REDIS_PASSWORD ? '***' : 'undefined');
+  console.log('  REDISHOST:', env.REDISHOST);
+  console.log('  REDISPORT:', env.REDISPORT);
+  console.log('  REDISPASSWORD:', env.REDISPASSWORD ? '***' : 'undefined');
   console.log('  REDIS_DB:', env.REDIS_DB);
   console.log('  REDIS_KEY_PREFIX:', env.REDIS_KEY_PREFIX);
 
   const config: any = {
-    host: env.REDIS_HOST,
-    port: env.REDIS_PORT,
+    host: env.REDISHOST,
+    port: env.REDISPORT,
     db: env.REDIS_DB,
     keyPrefix: env.REDIS_KEY_PREFIX,
     retryDelayOnFailover: 1000,
@@ -33,8 +33,8 @@ export function createRedisClient(): Redis {
   };
 
   // Sadece password varsa ekle
-  if (env.REDIS_PASSWORD) {
-    config.password = env.REDIS_PASSWORD;
+  if (env.REDISPASSWORD) {
+    config.password = env.REDISPASSWORD;
   }
 
   const redis = new Redis(config);

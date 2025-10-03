@@ -13,19 +13,19 @@ const envSchema = z.object({
   HMAC_SECRET: z.string().min(32),
 
   // Database - PostgreSQL
-  PG_HOST: z.string().default('localhost'),
-  PG_PORT: z.coerce.number().min(1).max(65535).default(5432),
+  PGHOST: z.string().default('localhost'),
+  PGPORT: z.coerce.number().min(1).max(65535).default(5432),
   PG_DATABASE: z.string().default('universal_tracking'),
-  PG_USERNAME: z.string().default('postgres'),
-  PG_PASSWORD: z.string().default('password'),
+  PGUSER: z.string().default('postgres'),
+  PGPASSWORD: z.string().default('password'),
   PG_SSL: z.coerce.boolean().default(false),
   PG_POOL_MIN: z.coerce.number().min(1).default(2),
   PG_POOL_MAX: z.coerce.number().min(1).max(100).default(10),
 
   // Cache - Redis
-  REDIS_HOST: z.string().default('localhost'),
-  REDIS_PORT: z.coerce.number().min(1).max(65535).default(6379),
-  REDIS_PASSWORD: z.string().optional(),
+  REDISHOST: z.string().default('localhost'),
+  REDISPORT: z.coerce.number().min(1).max(65535).default(6379),
+  REDISPASSWORD: z.string().optional(),
   REDIS_DB: z.coerce.number().min(0).max(15).default(0),
   REDIS_KEY_PREFIX: z.string().default('ut:'),
 
