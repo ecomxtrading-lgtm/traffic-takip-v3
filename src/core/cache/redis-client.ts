@@ -20,7 +20,7 @@ export function createRedisClient(): Redis {
   console.log('🔗 Creating Redis connection...');
   
   redis = new Redis(env.REDIS_URL, {
-    retryDelayOnFailover: 100,
+    retryDelayOnClusterDown: 100,
     enableReadyCheck: false,
     maxRetriesPerRequest: 3,
     lazyConnect: true,
