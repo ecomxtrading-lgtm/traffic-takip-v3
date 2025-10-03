@@ -35,12 +35,13 @@ async function resolveIPv4(hostname: string): Promise<string> {
  * Create database if it doesn't exist
  */
 async function createDatabase(): Promise<void> {
-  // IPv4 adresini çöz
-  const ipv4Host = await resolveIPv4(env.PGHOST);
+  // Supavisor hostname'ini kullan (IPv4 destekli)
+  const hostname = env.PGHOST.replace('db.', 'pooler.').replace('.supabase.co', '.supabase.co');
+  console.log(`🔗 Using Supavisor hostname: ${hostname}`);
   
   // Connect to default 'postgres' database first
   const adminConfig: PoolConfig = {
-    host: ipv4Host, // IPv4 adresini kullan
+    host: hostname, // Supavisor hostname'i kullan
     port: env.PGPORT,
     database: 'postgres', // Connect to default database
     user: env.PGUSER,
@@ -78,11 +79,12 @@ async function createDatabase(): Promise<void> {
  * Run database migrations
  */
 async function runMigrations(): Promise<void> {
-  // IPv4 adresini çöz
-  const ipv4Host = await resolveIPv4(env.PGHOST);
+  // Supavisor hostname'ini kullan (IPv4 destekli)
+  const hostname = env.PGHOST.replace('db.', 'pooler.').replace('.supabase.co', '.supabase.co');
+  console.log(`🔗 Using Supavisor hostname: ${hostname}`);
   
   const poolConfig: PoolConfig = {
-    host: ipv4Host, // IPv4 adresini kullan
+    host: hostname, // Supavisor hostname'i kullan
     port: env.PGPORT,
     database: env.PG_DATABASE,
     user: env.PGUSER,

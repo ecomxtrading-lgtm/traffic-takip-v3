@@ -46,11 +46,12 @@ export async function createPgClient(): Promise<Pool> {
   console.log('  PG_POOL_MAX:', env.PG_POOL_MAX);
 
   try {
-    // IPv4 adresini çöz
-    const ipv4Host = await resolveIPv4(env.PGHOST);
+    // Supavisor hostname'ini kullan (IPv4 destekli)
+    const hostname = env.PGHOST.replace('db.', 'pooler.').replace('.supabase.co', '.supabase.co');
+    console.log(`🔗 Using Supavisor hostname: ${hostname}`);
     
     const config: PoolConfig = {
-      host: ipv4Host, // IPv4 adresini kullan
+      host: hostname, // Supavisor hostname'i kullan
       port: env.PGPORT,
       database: env.PG_DATABASE,
       user: env.PGUSER,
