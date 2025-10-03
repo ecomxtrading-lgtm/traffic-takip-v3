@@ -38,6 +38,8 @@ export function createPgClient(): Pool {
       max: env.PG_POOL_MAX,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
+      // IPv4 zorla kullan - IPv6 sorununu çöz
+      family: 4,
     });
 
     // Handle pool events

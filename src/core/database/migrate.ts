@@ -24,6 +24,8 @@ async function createDatabase(): Promise<void> {
     user: env.PGUSER,
     password: env.PGPASSWORD,
     ssl: env.PG_SSL ? { rejectUnauthorized: false } : false,
+    // IPv4 zorla kullan - IPv6 sorununu çöz
+    family: 4,
   });
 
   try {
@@ -61,6 +63,8 @@ async function runMigrations(): Promise<void> {
     user: env.PGUSER,
     password: env.PGPASSWORD,
     ssl: env.PG_SSL ? { rejectUnauthorized: false } : false,
+    // IPv4 zorla kullan - IPv6 sorununu çöz
+    family: 4,
   });
 
   try {
