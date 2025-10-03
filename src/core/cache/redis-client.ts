@@ -52,8 +52,9 @@ export function createRedisClient(): Redis {
         
         // Upstash Redis için doğru URL formatı: rediss://username:password@host:port
         const url = new URL(env.REDIS_URL);
-        const redisUrl = `rediss://:${env.REDISPASSWORD}@${url.hostname}:6380`;
-        console.log('🔗 Formatted Redis URL:', redisUrl.replace(env.REDISPASSWORD, '***'));
+        const password = env.REDISPASSWORD || '';
+        const redisUrl = `rediss://:${password}@${url.hostname}:6380`;
+        console.log('🔗 Formatted Redis URL:', redisUrl.replace(password, '***'));
         
         redis = new Redis(redisUrl, redisConfig);
       } else {
