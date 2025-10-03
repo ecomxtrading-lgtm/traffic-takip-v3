@@ -39,20 +39,41 @@ export function createRedisClient(): Redis {
   console.log('🔍 REDIS_URL starts with:', redisUrl.substring(0, 10));
   console.log('🔍 Final Redis URL format:', redisUrl.startsWith('redis://') ? '✅ Correct' : '❌ Invalid');
   
-  redis = new Redis(redisUrl);
+  // Enhanced Redis configuration for Railway
+  redis = new Redis(redisUrl, {
+    // Connection settings
+    lazyConnect: true,
+    maxRetriesPerRequest: 3, // Reduce from default 20
+    
+    // Connection pool settings
+    family: 4, // Force IPv4
+    keepAlive: 30000,
+    
+    // Timeout settings
+    connectTimeout: 10000,
+    commandTimeout: 5000,
+  });
 
   redis.on('connect', () => {
     console.log('✅ Redis connected successfully');
   });
 
   redis.on('error', (error) => {
-    console.error('❌ Redis connection error:', error);
+    console.error('❌ Redis connection error:', error.message || error);
     // Don't throw error immediately, let the app continue
     console.warn('⚠️  Redis connection failed, but continuing without Redis...');
   });
 
   redis.on('close', () => {
     console.log('🔌 Redis connection closed');
+  });
+
+  redis.on('reconnecting', () => {
+    console.log('🔄 Redis reconnecting...');
+  });
+
+  redis.on('ready', () => {
+    console.log('🚀 Redis ready for commands');
   });
 
   return redis;

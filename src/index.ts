@@ -95,7 +95,14 @@ async function testDatabaseConnections(): Promise<void> {
   // Test Redis connection (non-blocking)
   try {
     const redis = container.resolve<Redis>(TOKENS.REDIS_CLIENT);
-    await redis.ping();
+    
+    // Test with timeout to avoid hanging
+    const pingPromise = redis.ping();
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Redis ping timeout')), 5000)
+    );
+    
+    await Promise.race([pingPromise, timeoutPromise]);
     console.log('✅ Redis connection successful');
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
