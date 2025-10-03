@@ -18,6 +18,8 @@ export function createRedisClient(): Redis {
   }
 
   console.log('🔗 Creating Redis connection...');
+  console.log('🔍 REDIS_URL length:', env.REDIS_URL.length);
+  console.log('🔍 REDIS_URL starts with:', env.REDIS_URL.substring(0, 10));
   
   redis = new Redis(env.REDIS_URL);
 
