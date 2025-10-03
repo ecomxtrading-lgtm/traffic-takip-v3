@@ -83,13 +83,14 @@ async function testDatabaseConnections(): Promise<void> {
   if (pgConnected) {
     console.log('✅ PostgreSQL connection successful');
   } else {
-    console.log('⚠️ PostgreSQL connection failed - attempting to create database...');
+    console.log('❌ PostgreSQL connection failed - attempting to create database...');
     
     try {
       await migrate();
       console.log('✅ Database migration completed');
     } catch (error) {
-      console.log('⚠️ Migration failed - continuing without database');
+      console.error('❌ Migration failed - crashing the app');
+      throw error; // Crash the app instead of graceful fallback
     }
   }
 }

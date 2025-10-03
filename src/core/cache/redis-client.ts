@@ -23,105 +23,84 @@ export function createRedisClient(): Redis {
   if (env.REDIS_URL) {
     console.log('🔗 Using REDIS_URL for connection');
     
-    try {
-      // Upstash Redis için özel konfigürasyon
-      const redisConfig: any = {
-        keyPrefix: env.REDIS_KEY_PREFIX,
-        maxRetriesPerRequest: 3,
-        lazyConnect: false,
-        connectTimeout: 10000,
-        commandTimeout: 5000,
-        enableReadyCheck: true,
+    // Upstash Redis için özel konfigürasyon
+    const redisConfig: any = {
+      keyPrefix: env.REDIS_KEY_PREFIX,
+      maxRetriesPerRequest: 3,
+      lazyConnect: false,
+      connectTimeout: 10000,
+      commandTimeout: 5000,
+      enableReadyCheck: true,
+    };
+
+    // Upstash Redis URL'si ise TLS ayarları ekle
+    if (env.REDIS_URL.startsWith('rediss://') || env.REDIS_URL.startsWith('https://')) {
+      redisConfig.tls = {
+        rejectUnauthorized: false
       };
+      console.log('🔒 Using TLS for Upstash Redis connection');
+    }
 
-      // Upstash Redis URL'si ise TLS ayarları ekle
-      if (env.REDIS_URL.startsWith('rediss://') || env.REDIS_URL.startsWith('https://')) {
-        redisConfig.tls = {
-          rejectUnauthorized: false
-        };
-        console.log('🔒 Using TLS for Upstash Redis connection');
-      }
-
-      // Upstash REST API URL'si ise farklı format kullan
-      let redis: Redis;
-      if (env.REDIS_URL.startsWith('https://') && env.REDIS_URL.includes('upstash.io')) {
-        // Upstash için doğru URL formatı
-        console.log('🌐 Using Upstash Redis with REST API');
-        console.log('🔗 Redis URL:', env.REDIS_URL);
-        console.log('🔑 Redis Password:', env.REDISPASSWORD ? '***' : 'undefined');
-        
-        // Upstash Redis için doğru URL formatı
-        const url = new URL(env.REDIS_URL);
-        const password = env.REDISPASSWORD || '';
-        
-        // Upstash Redis için Redis protokolü kullanmayalım, mock client döndürelim
-        console.log('⚠️ Upstash REST API detected - using mock Redis client');
-        console.log('💡 For production, consider using Upstash REST API directly');
-        
-        const mockRedis = {
-          get: async () => null,
-          set: async () => 'OK',
-          del: async () => 1,
-          exists: async () => 0,
-          expire: async () => 1,
-          ttl: async () => -1,
-          keys: async () => [],
-          flushdb: async () => 'OK',
-          ping: async () => 'PONG',
-          quit: async () => 'OK',
-          disconnect: () => {},
-          on: () => {},
-          off: () => {}
-        } as any;
-        
-        return mockRedis;
-      } else {
-        redis = new Redis(env.REDIS_URL, redisConfig);
-      }
-
-      // Handle connection events
-      redis.on('connect', () => {
-        console.log('✅ Redis connected');
-      });
-
-      redis.on('ready', () => {
-        console.log('✅ Redis ready');
-      });
-
-      redis.on('error', (error) => {
-        console.error('❌ Redis connection error:', error);
-        console.log('⚠️ Redis will be disabled, app will continue without caching');
-      });
-
-      redis.on('close', () => {
-        console.log('🔌 Redis connection closed');
-      });
-
-      redis.on('reconnecting', () => {
-        console.log('🔄 Redis reconnecting...');
-      });
-
-      return redis;
-    } catch (error) {
-      console.error('❌ Failed to create Redis client:', error);
-      console.log('⚠️ Falling back to mock Redis client');
+    // Upstash REST API URL'si ise farklı format kullan
+    let redis: Redis;
+    if (env.REDIS_URL.startsWith('https://') && env.REDIS_URL.includes('upstash.io')) {
+      // Upstash için doğru URL formatı
+      console.log('🌐 Using Upstash Redis with REST API');
+      console.log('🔗 Redis URL:', env.REDIS_URL);
+      console.log('🔑 Redis Password:', env.REDISPASSWORD ? '***' : 'undefined');
       
-      // Mock Redis client döndür
+      // Upstash Redis için doğru URL formatı
+      const url = new URL(env.REDIS_URL);
+      const password = env.REDISPASSWORD || '';
+      
+      // Upstash Redis için Redis protokolü kullanmayalım, mock client döndürelim
+      console.log('⚠️ Upstash REST API detected - using mock Redis client');
+      console.log('💡 For production, consider using Upstash REST API directly');
+      
       const mockRedis = {
+        get: async () => null,
+        set: async () => 'OK',
+        del: async () => 1,
+        exists: async () => 0,
+        expire: async () => 1,
+        ttl: async () => -1,
+        keys: async () => [],
+        flushdb: async () => 'OK',
+        ping: async () => 'PONG',
+        quit: async () => 'OK',
+        disconnect: () => {},
         on: () => {},
-        quit: () => Promise.resolve(),
-        get: () => Promise.resolve(null),
-        set: () => Promise.resolve('OK'),
-        del: () => Promise.resolve(1),
-        exists: () => Promise.resolve(0),
-        expire: () => Promise.resolve(1),
-        ttl: () => Promise.resolve(-1),
-        keys: () => Promise.resolve([]),
-        flushdb: () => Promise.resolve('OK'),
+        off: () => {}
       } as any;
       
       return mockRedis;
+    } else {
+      redis = new Redis(env.REDIS_URL, redisConfig);
     }
+
+    // Handle connection events
+    redis.on('connect', () => {
+      console.log('✅ Redis connected');
+    });
+
+    redis.on('ready', () => {
+      console.log('✅ Redis ready');
+    });
+
+    redis.on('error', (error) => {
+      console.error('❌ Redis connection error:', error);
+      throw error; // Crash the app instead of graceful fallback
+    });
+
+    redis.on('close', () => {
+      console.log('🔌 Redis connection closed');
+    });
+
+    redis.on('reconnecting', () => {
+      console.log('🔄 Redis reconnecting...');
+    });
+
+    return redis;
   }
 
   // Fallback: Ayrı ayrı değerleri kullan
