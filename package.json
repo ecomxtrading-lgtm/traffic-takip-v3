@@ -15,7 +15,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "health": "curl http://localhost:3000/health"
+    "health": "curl http://localhost:3000/health",
+    "migrate": "tsx src/core/database/migrate.ts"
   },
   "keywords": [
     "tracking",

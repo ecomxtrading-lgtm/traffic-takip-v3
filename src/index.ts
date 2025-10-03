@@ -10,6 +10,7 @@ import { eventBus } from './core/events/event-bus.js';
 import { startServer } from './core/http/fastify.js';
 import { createRedisClient, closeRedisClient } from './core/cache/redis-client.js';
 import { createPgClient, testPgConnection, closePgClient } from './core/database/postgres-client.js';
+import { migrate } from './core/database/migrate.js';
 // import { registerApiRoutes } from './core/http/routes/api.js'; // Used in fastify.ts
 
 /**
@@ -72,7 +73,7 @@ function registerCoreServices(): void {
 }
 
 /**
- * Test database connections
+ * Test database connections and run migrations
  */
 async function testDatabaseConnections(): Promise<void> {
   console.log('🔍 Testing database connections...');
@@ -82,7 +83,14 @@ async function testDatabaseConnections(): Promise<void> {
   if (pgConnected) {
     console.log('✅ PostgreSQL connection successful');
   } else {
-    console.log('⚠️ PostgreSQL connection failed - continuing without database');
+    console.log('⚠️ PostgreSQL connection failed - attempting to create database...');
+    
+    try {
+      await migrate();
+      console.log('✅ Database migration completed');
+    } catch (error) {
+      console.log('⚠️ Migration failed - continuing without database');
+    }
   }
 }
 
