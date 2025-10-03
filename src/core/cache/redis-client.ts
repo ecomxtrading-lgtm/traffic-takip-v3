@@ -10,6 +10,14 @@ import { env } from '../config/env.js';
  * Create Redis client with proper configuration
  */
 export function createRedisClient(): Redis {
+  // Debug: Environment variables'ı logla
+  console.log('🔍 Redis Environment Variables:');
+  console.log('  REDIS_HOST:', env.REDIS_HOST);
+  console.log('  REDIS_PORT:', env.REDIS_PORT);
+  console.log('  REDIS_PASSWORD:', env.REDIS_PASSWORD ? '***' : 'undefined');
+  console.log('  REDIS_DB:', env.REDIS_DB);
+  console.log('  REDIS_KEY_PREFIX:', env.REDIS_KEY_PREFIX);
+
   const config: any = {
     host: env.REDIS_HOST,
     port: env.REDIS_PORT,
