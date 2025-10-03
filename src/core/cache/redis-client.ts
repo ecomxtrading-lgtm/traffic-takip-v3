@@ -47,7 +47,7 @@ export function createRedisClient(): Redis {
       if (env.REDIS_URL.startsWith('https://') && env.REDIS_URL.includes('upstash.io')) {
         // Upstash REST API için özel format
         const url = new URL(env.REDIS_URL);
-        const redisUrl = `rediss://:${env.REDIS_PASSWORD}@${url.hostname}:6380`;
+        const redisUrl = `rediss://:${env.REDISPASSWORD}@${url.hostname}:6380`;
         console.log('🌐 Using Upstash Redis with REST API');
         redis = new Redis(redisUrl, redisConfig);
       } else {
