@@ -5,18 +5,32 @@
 
 import { Pool, PoolClient, PoolConfig } from 'pg';
 import { env } from '../config/env.js';
+import { lookup } from 'dns';
+import { promisify } from 'util';
 
-// IPv4 zorla kullanmak için PoolConfig'i genişlet
-interface ExtendedPoolConfig extends PoolConfig {
-  family?: 4 | 6;
-}
+const dnsLookup = promisify(lookup);
 
 let pool: Pool | null = null;
 
 /**
+ * Resolve hostname to IPv4 address
+ */
+async function resolveIPv4(hostname: string): Promise<string> {
+  try {
+    console.log(`🔍 Resolving IPv4 for: ${hostname}`);
+    const result = await dnsLookup(hostname, { family: 4 });
+    console.log(`✅ IPv4 resolved: ${result.address}`);
+    return result.address;
+  } catch (error) {
+    console.error(`❌ IPv4 resolution failed for ${hostname}:`, error);
+    throw error;
+  }
+}
+
+/**
  * Create PostgreSQL connection pool
  */
-export function createPgClient(): Pool {
+export async function createPgClient(): Promise<Pool> {
   if (pool) {
     return pool;
   }
@@ -32,8 +46,11 @@ export function createPgClient(): Pool {
   console.log('  PG_POOL_MAX:', env.PG_POOL_MAX);
 
   try {
-    const config: ExtendedPoolConfig = {
-      host: env.PGHOST,
+    // IPv4 adresini çöz
+    const ipv4Host = await resolveIPv4(env.PGHOST);
+    
+    const config: PoolConfig = {
+      host: ipv4Host, // IPv4 adresini kullan
       port: env.PGPORT,
       database: env.PG_DATABASE,
       user: env.PGUSER,
@@ -43,8 +60,6 @@ export function createPgClient(): Pool {
       max: env.PG_POOL_MAX,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
-      // IPv4 zorla kullan - IPv6 sorununu çöz
-      family: 4,
     };
     
     pool = new Pool(config);
@@ -83,7 +98,7 @@ export function createPgClient(): Pool {
  */
 export async function testPgConnection(): Promise<boolean> {
   try {
-    const client = createPgClient();
+    const client = await createPgClient();
     const result = await client.query('SELECT NOW() as current_time');
     console.log('✅ PostgreSQL connection test successful:', result.rows[0]);
     return true;

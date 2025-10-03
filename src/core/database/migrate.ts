@@ -8,29 +8,44 @@ import { env } from '../config/env.js';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { lookup } from 'dns';
+import { promisify } from 'util';
 
-// IPv4 zorla kullanmak için PoolConfig'i genişlet
-interface ExtendedPoolConfig extends PoolConfig {
-  family?: 4 | 6;
-}
+const dnsLookup = promisify(lookup);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
+ * Resolve hostname to IPv4 address
+ */
+async function resolveIPv4(hostname: string): Promise<string> {
+  try {
+    console.log(`🔍 Resolving IPv4 for: ${hostname}`);
+    const result = await dnsLookup(hostname, { family: 4 });
+    console.log(`✅ IPv4 resolved: ${result.address}`);
+    return result.address;
+  } catch (error) {
+    console.error(`❌ IPv4 resolution failed for ${hostname}:`, error);
+    throw error;
+  }
+}
+
+/**
  * Create database if it doesn't exist
  */
 async function createDatabase(): Promise<void> {
+  // IPv4 adresini çöz
+  const ipv4Host = await resolveIPv4(env.PGHOST);
+  
   // Connect to default 'postgres' database first
-  const adminConfig: ExtendedPoolConfig = {
-    host: env.PGHOST,
+  const adminConfig: PoolConfig = {
+    host: ipv4Host, // IPv4 adresini kullan
     port: env.PGPORT,
     database: 'postgres', // Connect to default database
     user: env.PGUSER,
     password: env.PGPASSWORD,
     ssl: env.PG_SSL ? { rejectUnauthorized: false } : false,
-    // IPv4 zorla kullan - IPv6 sorununu çöz
-    family: 4,
   };
   
   const adminPool = new Pool(adminConfig);
@@ -63,15 +78,16 @@ async function createDatabase(): Promise<void> {
  * Run database migrations
  */
 async function runMigrations(): Promise<void> {
-  const poolConfig: ExtendedPoolConfig = {
-    host: env.PGHOST,
+  // IPv4 adresini çöz
+  const ipv4Host = await resolveIPv4(env.PGHOST);
+  
+  const poolConfig: PoolConfig = {
+    host: ipv4Host, // IPv4 adresini kullan
     port: env.PGPORT,
     database: env.PG_DATABASE,
     user: env.PGUSER,
     password: env.PGPASSWORD,
     ssl: env.PG_SSL ? { rejectUnauthorized: false } : false,
-    // IPv4 zorla kullan - IPv6 sorununu çöz
-    family: 4,
   };
   
   const pool = new Pool(poolConfig);

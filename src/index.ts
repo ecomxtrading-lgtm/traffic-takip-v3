@@ -65,7 +65,7 @@ function registerCoreServices(): void {
   container.singleton(TOKENS.EVENT_BUS, () => eventBus);
 
   // Register database clients
-  container.singleton(TOKENS.PG_CLIENT, () => createPgClient());
+  container.singleton(TOKENS.PG_CLIENT, async () => await createPgClient());
   container.singleton(TOKENS.REDIS_CLIENT, () => createRedisClient());
   // container.singleton(TOKENS.CLICKHOUSE_CLIENT, () => createClickHouseClient());
 
