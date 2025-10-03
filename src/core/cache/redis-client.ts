@@ -45,11 +45,21 @@ export function createRedisClient(): Redis {
       // Upstash REST API URL'si ise farklı format kullan
       let redis: Redis;
       if (env.REDIS_URL.startsWith('https://') && env.REDIS_URL.includes('upstash.io')) {
-        // Upstash REST API için özel format
-        const url = new URL(env.REDIS_URL);
-        const redisUrl = `rediss://:${env.REDISPASSWORD}@${url.hostname}:6380`;
+        // Upstash REST API için doğrudan URL kullan
         console.log('🌐 Using Upstash Redis with REST API');
-        redis = new Redis(redisUrl, redisConfig);
+        console.log('🔗 Redis URL:', env.REDIS_URL);
+        console.log('🔑 Redis Password:', env.REDISPASSWORD ? '***' : 'undefined');
+        
+        // Upstash için özel konfigürasyon
+        const upstashConfig = {
+          ...redisConfig,
+          password: env.REDISPASSWORD,
+          // Upstash REST API için port 6380 kullan
+          port: 6380,
+          host: env.REDIS_URL.replace('https://', '').replace('http://', ''),
+        };
+        
+        redis = new Redis(upstashConfig);
       } else {
         redis = new Redis(env.REDIS_URL, redisConfig);
       }
