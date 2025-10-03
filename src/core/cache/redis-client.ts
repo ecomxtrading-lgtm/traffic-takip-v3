@@ -24,14 +24,35 @@ export function createRedisClient(): Redis {
     console.log('🔗 Using REDIS_URL for connection');
     
     try {
-      const redis = new Redis(env.REDIS_URL, {
+      // Upstash Redis için özel konfigürasyon
+      const redisConfig: any = {
         keyPrefix: env.REDIS_KEY_PREFIX,
         maxRetriesPerRequest: 3,
         lazyConnect: false,
         connectTimeout: 10000,
         commandTimeout: 5000,
         enableReadyCheck: true,
-      });
+      };
+
+      // Upstash Redis URL'si ise TLS ayarları ekle
+      if (env.REDIS_URL.startsWith('rediss://') || env.REDIS_URL.startsWith('https://')) {
+        redisConfig.tls = {
+          rejectUnauthorized: false
+        };
+        console.log('🔒 Using TLS for Upstash Redis connection');
+      }
+
+      // Upstash REST API URL'si ise farklı format kullan
+      let redis: Redis;
+      if (env.REDIS_URL.startsWith('https://') && env.REDIS_URL.includes('upstash.io')) {
+        // Upstash REST API için özel format
+        const url = new URL(env.REDIS_URL);
+        const redisUrl = `rediss://:${env.REDIS_PASSWORD}@${url.hostname}:6380`;
+        console.log('🌐 Using Upstash Redis with REST API');
+        redis = new Redis(redisUrl, redisConfig);
+      } else {
+        redis = new Redis(env.REDIS_URL, redisConfig);
+      }
 
       // Handle connection events
       redis.on('connect', () => {
