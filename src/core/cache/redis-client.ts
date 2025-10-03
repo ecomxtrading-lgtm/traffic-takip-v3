@@ -24,12 +24,10 @@ export function createRedisClient(): Redis {
     console.log('🔗 Using REDIS_URL for connection');
     const redis = new Redis(env.REDIS_URL, {
       keyPrefix: env.REDIS_KEY_PREFIX,
-      retryDelayOnFailover: 1000,
       maxRetriesPerRequest: 3,
       lazyConnect: false,
       connectTimeout: 10000,
       commandTimeout: 5000,
-      retryDelayOnClusterDown: 300,
       enableReadyCheck: true,
     });
 
@@ -64,12 +62,10 @@ export function createRedisClient(): Redis {
     port: env.REDISPORT,
     db: env.REDIS_DB,
     keyPrefix: env.REDIS_KEY_PREFIX,
-    retryDelayOnFailover: 1000,
     maxRetriesPerRequest: 3,
     lazyConnect: false, // Bağlantıyı hemen kur
     connectTimeout: 10000,
     commandTimeout: 5000,
-    retryDelayOnClusterDown: 300,
     enableReadyCheck: true,
   };
 
