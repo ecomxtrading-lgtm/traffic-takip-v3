@@ -1,36 +1,9 @@
-/**
- * PostgreSQL Client Factory
- * Creates and configures PostgreSQL connection pool
- */
-
-import { Pool, PoolClient, PoolConfig } from 'pg';
+import { Pool } from 'pg';
 import { env } from '../config/env.js';
-import { lookup } from 'dns';
-import { promisify } from 'util';
-
-const dnsLookup = promisify(lookup);
 
 let pool: Pool | null = null;
 
-/**
- * Resolve hostname to IPv4 address
- */
-async function resolveIPv4(hostname: string): Promise<string> {
-  try {
-    console.log(`🔍 Resolving IPv4 for: ${hostname}`);
-    const result = await dnsLookup(hostname, { family: 4 });
-    console.log(`✅ IPv4 resolved: ${result.address}`);
-    return result.address;
-  } catch (error) {
-    console.error(`❌ IPv4 resolution failed for ${hostname}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Create PostgreSQL connection pool
- */
-export async function createPgClient(): Promise<Pool> {
+export function createPgClient(): Pool {
   if (pool) {
     return pool;
   }
@@ -42,64 +15,46 @@ export async function createPgClient(): Promise<Pool> {
   console.log('  PGUSER:', env.PGUSER);
   console.log('  PGPASSWORD:', env.PGPASSWORD ? '***' : 'undefined');
   console.log('  PG_SSL:', env.PG_SSL);
-  console.log('  PG_POOL_MIN:', env.PG_POOL_MIN);
-  console.log('  PG_POOL_MAX:', env.PG_POOL_MAX);
 
-  try {
-    // Supavisor hostname'ini kullan (IPv4 destekli)
-    const hostname = env.PGHOST.replace('db.', 'pooler.').replace('.supabase.co', '.supabase.co');
-    console.log(`🔗 Using Supavisor hostname: ${hostname}`);
-    
-    const config: PoolConfig = {
-      host: hostname, // Supavisor hostname'i kullan
-      port: env.PGPORT,
-      database: env.PG_DATABASE,
-      user: env.PGUSER,
-      password: env.PGPASSWORD,
-      ssl: env.PG_SSL ? { rejectUnauthorized: false } : false,
-      min: env.PG_POOL_MIN,
-      max: env.PG_POOL_MAX,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
-    };
-    
-    pool = new Pool(config);
-
-    // Handle pool events
-    pool.on('connect', (client: PoolClient) => {
-      console.log('✅ PostgreSQL client connected');
-    });
-
-    pool.on('error', (err: Error) => {
-      console.error('❌ PostgreSQL pool error:', err);
-    });
-
-    pool.on('remove', () => {
-      console.log('🔌 PostgreSQL client removed from pool');
-    });
-
-    console.log('✅ PostgreSQL pool created successfully');
-    return pool;
-  } catch (error) {
-    console.error('❌ Failed to create PostgreSQL pool:', error);
-    console.log('⚠️ PostgreSQL will be disabled, app will continue without database');
-    
-    // Return a mock pool for graceful degradation
-    return {
-      query: () => Promise.reject(new Error('PostgreSQL not available')),
-      connect: () => Promise.reject(new Error('PostgreSQL not available')),
-      end: () => Promise.resolve(),
-      on: () => {},
-    } as any;
+  if (!env.PGHOST || !env.PG_DATABASE || !env.PGUSER || !env.PGPASSWORD) {
+    console.log('❌ Required PostgreSQL environment variables missing');
+    throw new Error('PostgreSQL environment variables are required');
   }
+
+  console.log('🔗 Creating PostgreSQL connection...');
+  
+  pool = new Pool({
+    host: env.PGHOST,
+    port: env.PGPORT,
+    database: env.PG_DATABASE,
+    user: env.PGUSER,
+    password: env.PGPASSWORD,
+    ssl: env.PG_SSL ? { rejectUnauthorized: false } : false,
+    min: env.PG_POOL_MIN || 2,
+    max: env.PG_POOL_MAX || 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+  });
+
+  pool.on('connect', () => {
+    console.log('✅ PostgreSQL client connected');
+  });
+
+  pool.on('error', (err) => {
+    console.error('❌ PostgreSQL pool error:', err);
+  });
+
+  pool.on('remove', () => {
+    console.log('🔌 PostgreSQL client removed from pool');
+  });
+
+  console.log('✅ PostgreSQL pool created successfully');
+  return pool;
 }
 
-/**
- * Test PostgreSQL connection
- */
 export async function testPgConnection(): Promise<boolean> {
   try {
-    const client = await createPgClient();
+    const client = createPgClient();
     const result = await client.query('SELECT NOW() as current_time');
     console.log('✅ PostgreSQL connection test successful:', result.rows[0]);
     return true;
@@ -109,9 +64,6 @@ export async function testPgConnection(): Promise<boolean> {
   }
 }
 
-/**
- * Close PostgreSQL pool gracefully
- */
 export async function closePgClient(): Promise<void> {
   if (pool) {
     try {
@@ -122,11 +74,4 @@ export async function closePgClient(): Promise<void> {
       console.error('❌ Error closing PostgreSQL pool:', error);
     }
   }
-}
-
-/**
- * Get raw pool instance (for advanced usage)
- */
-export function getPgPool(): Pool | null {
-  return pool;
 }

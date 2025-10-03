@@ -10,7 +10,6 @@ import { eventBus } from './core/events/event-bus.js';
 import { startServer } from './core/http/fastify.js';
 import { createRedisClient, closeRedisClient } from './core/cache/redis-client.js';
 import { createPgClient, testPgConnection, closePgClient } from './core/database/postgres-client.js';
-import { migrate } from './core/database/migrate.js';
 // import { registerApiRoutes } from './core/http/routes/api.js'; // Used in fastify.ts
 
 /**
@@ -65,7 +64,7 @@ function registerCoreServices(): void {
   container.singleton(TOKENS.EVENT_BUS, () => eventBus);
 
   // Register database clients
-  container.singleton(TOKENS.PG_CLIENT, async () => await createPgClient());
+  container.singleton(TOKENS.PG_CLIENT, () => createPgClient());
   container.singleton(TOKENS.REDIS_CLIENT, () => createRedisClient());
   // container.singleton(TOKENS.CLICKHOUSE_CLIENT, () => createClickHouseClient());
 
@@ -73,7 +72,7 @@ function registerCoreServices(): void {
 }
 
 /**
- * Test database connections and run migrations
+ * Test database connections
  */
 async function testDatabaseConnections(): Promise<void> {
   console.log('🔍 Testing database connections...');
@@ -83,15 +82,8 @@ async function testDatabaseConnections(): Promise<void> {
   if (pgConnected) {
     console.log('✅ PostgreSQL connection successful');
   } else {
-    console.log('❌ PostgreSQL connection failed - attempting to create database...');
-    
-    try {
-      await migrate();
-      console.log('✅ Database migration completed');
-    } catch (error) {
-      console.error('❌ Migration failed - crashing the app');
-      throw error; // Crash the app instead of graceful fallback
-    }
+    console.log('❌ PostgreSQL connection failed - crashing the app');
+    throw new Error('PostgreSQL connection failed');
   }
 }
 
