@@ -23,6 +23,7 @@ const envSchema = z.object({
   PG_POOL_MAX: z.coerce.number().min(1).max(100).default(10),
 
   // Cache - Redis
+  REDIS_URL: z.string().optional(),
   REDISHOST: z.string().default('localhost'),
   REDISPORT: z.coerce.number().min(1).max(65535).default(6379),
   REDISPASSWORD: z.string().optional(),
