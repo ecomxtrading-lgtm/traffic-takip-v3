@@ -3,8 +3,13 @@
  * Creates and configures PostgreSQL connection pool
  */
 
-import { Pool, PoolClient } from 'pg';
+import { Pool, PoolClient, PoolConfig } from 'pg';
 import { env } from '../config/env.js';
+
+// IPv4 zorla kullanmak için PoolConfig'i genişlet
+interface ExtendedPoolConfig extends PoolConfig {
+  family?: 4 | 6;
+}
 
 let pool: Pool | null = null;
 
@@ -27,7 +32,7 @@ export function createPgClient(): Pool {
   console.log('  PG_POOL_MAX:', env.PG_POOL_MAX);
 
   try {
-    pool = new Pool({
+    const config: ExtendedPoolConfig = {
       host: env.PGHOST,
       port: env.PGPORT,
       database: env.PG_DATABASE,
@@ -40,7 +45,9 @@ export function createPgClient(): Pool {
       connectionTimeoutMillis: 10000,
       // IPv4 zorla kullan - IPv6 sorununu çöz
       family: 4,
-    });
+    };
+    
+    pool = new Pool(config);
 
     // Handle pool events
     pool.on('connect', (client: PoolClient) => {

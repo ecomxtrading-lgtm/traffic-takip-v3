@@ -3,11 +3,16 @@
  * Creates database and runs migrations
  */
 
-import { Pool } from 'pg';
+import { Pool, PoolConfig } from 'pg';
 import { env } from '../config/env.js';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+
+// IPv4 zorla kullanmak için PoolConfig'i genişlet
+interface ExtendedPoolConfig extends PoolConfig {
+  family?: 4 | 6;
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -17,7 +22,7 @@ const __dirname = dirname(__filename);
  */
 async function createDatabase(): Promise<void> {
   // Connect to default 'postgres' database first
-  const adminPool = new Pool({
+  const adminConfig: ExtendedPoolConfig = {
     host: env.PGHOST,
     port: env.PGPORT,
     database: 'postgres', // Connect to default database
@@ -26,7 +31,9 @@ async function createDatabase(): Promise<void> {
     ssl: env.PG_SSL ? { rejectUnauthorized: false } : false,
     // IPv4 zorla kullan - IPv6 sorununu çöz
     family: 4,
-  });
+  };
+  
+  const adminPool = new Pool(adminConfig);
 
   try {
     console.log(`🔍 Checking if database '${env.PG_DATABASE}' exists...`);
@@ -56,7 +63,7 @@ async function createDatabase(): Promise<void> {
  * Run database migrations
  */
 async function runMigrations(): Promise<void> {
-  const pool = new Pool({
+  const poolConfig: ExtendedPoolConfig = {
     host: env.PGHOST,
     port: env.PGPORT,
     database: env.PG_DATABASE,
@@ -65,7 +72,9 @@ async function runMigrations(): Promise<void> {
     ssl: env.PG_SSL ? { rejectUnauthorized: false } : false,
     // IPv4 zorla kullan - IPv6 sorununu çöz
     family: 4,
-  });
+  };
+  
+  const pool = new Pool(poolConfig);
 
   try {
     console.log('🔄 Running database migrations...');
