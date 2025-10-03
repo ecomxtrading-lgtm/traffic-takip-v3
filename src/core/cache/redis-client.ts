@@ -22,26 +22,37 @@ export function createRedisClient(): Redis {
   // REDIS_URL varsa onu kullan, yoksa ayrı ayrı değerleri kullan
   if (env.REDIS_URL) {
     console.log('🔗 Using REDIS_URL for connection');
-    
-    // Geçici olarak Redis bağlantısını devre dışı bırak
-    console.log('⚠️ Redis connection temporarily disabled due to DNS issues');
-    console.log('🔧 Please check REDIS_URL in Railway dashboard');
-    
-    // Mock Redis client döndür
-    const mockRedis = {
-      on: () => {},
-      quit: () => Promise.resolve(),
-      get: () => Promise.resolve(null),
-      set: () => Promise.resolve('OK'),
-      del: () => Promise.resolve(1),
-      exists: () => Promise.resolve(0),
-      expire: () => Promise.resolve(1),
-      ttl: () => Promise.resolve(-1),
-      keys: () => Promise.resolve([]),
-      flushdb: () => Promise.resolve('OK'),
-    } as any;
-    
-    return mockRedis;
+    const redis = new Redis(env.REDIS_URL, {
+      keyPrefix: env.REDIS_KEY_PREFIX,
+      maxRetriesPerRequest: 3,
+      lazyConnect: false,
+      connectTimeout: 10000,
+      commandTimeout: 5000,
+      enableReadyCheck: true,
+    });
+
+    // Handle connection events
+    redis.on('connect', () => {
+      console.log('✅ Redis connected');
+    });
+
+    redis.on('ready', () => {
+      console.log('✅ Redis ready');
+    });
+
+    redis.on('error', (error) => {
+      console.error('❌ Redis connection error:', error);
+    });
+
+    redis.on('close', () => {
+      console.log('🔌 Redis connection closed');
+    });
+
+    redis.on('reconnecting', () => {
+      console.log('🔄 Redis reconnecting...');
+    });
+
+    return redis;
   }
 
   // Fallback: Ayrı ayrı değerleri kullan
