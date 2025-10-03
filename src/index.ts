@@ -9,6 +9,7 @@ import { container, TOKENS } from './core/di/container.js';
 import { eventBus } from './core/events/event-bus.js';
 import { startServer } from './core/http/fastify.js';
 import { createRedisClient, closeRedisClient } from './core/cache/redis-client.js';
+import { createPgClient, testPgConnection, closePgClient } from './core/database/postgres-client.js';
 // import { registerApiRoutes } from './core/http/routes/api.js'; // Used in fastify.ts
 
 /**
@@ -26,6 +27,9 @@ async function bootstrap(): Promise<void> {
 
     // Resolve all singleton services (startup optimization)
     container.resolveAll();
+
+    // Test database connections
+    await testDatabaseConnections();
 
     // Start the server
     await startServer();
@@ -60,11 +64,26 @@ function registerCoreServices(): void {
   container.singleton(TOKENS.EVENT_BUS, () => eventBus);
 
   // Register database clients
-  // container.singleton(TOKENS.PG_CLIENT, () => createPgClient());
+  container.singleton(TOKENS.PG_CLIENT, () => createPgClient());
   container.singleton(TOKENS.REDIS_CLIENT, () => createRedisClient());
   // container.singleton(TOKENS.CLICKHOUSE_CLIENT, () => createClickHouseClient());
 
   console.log('📦 Core services registered');
+}
+
+/**
+ * Test database connections
+ */
+async function testDatabaseConnections(): Promise<void> {
+  console.log('🔍 Testing database connections...');
+  
+  // Test PostgreSQL connection
+  const pgConnected = await testPgConnection();
+  if (pgConnected) {
+    console.log('✅ PostgreSQL connection successful');
+  } else {
+    console.log('⚠️ PostgreSQL connection failed - continuing without database');
+  }
 }
 
 /**
@@ -81,6 +100,9 @@ function setupGracefulShutdown(): void {
       // Close database connections
       const redis = container.resolve<Redis>(TOKENS.REDIS_CLIENT);
       await closeRedisClient(redis);
+      
+      // Close PostgreSQL connection
+      await closePgClient();
       
       // TODO: Stop background jobs
       // await stopBackgroundJobs();
