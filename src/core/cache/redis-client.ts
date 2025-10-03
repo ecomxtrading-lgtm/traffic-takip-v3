@@ -41,42 +41,26 @@ export function createRedisClient(): Redis {
       console.log('🔒 Using TLS for Upstash Redis connection');
     }
 
-    // Upstash REST API URL'si ise farklı format kullan
-    let redis: Redis;
-    if (env.REDIS_URL.startsWith('https://') && env.REDIS_URL.includes('upstash.io')) {
-      // Upstash için doğru URL formatı
-      console.log('🌐 Using Upstash Redis with REST API');
-      console.log('🔗 Redis URL:', env.REDIS_URL);
-      console.log('🔑 Redis Password:', env.REDISPASSWORD ? '***' : 'undefined');
-      
-      // Upstash Redis için doğru URL formatı
-      const url = new URL(env.REDIS_URL);
-      const password = env.REDISPASSWORD || '';
-      
-      // Upstash Redis için Redis protokolü kullanmayalım, mock client döndürelim
-      console.log('⚠️ Upstash REST API detected - using mock Redis client');
-      console.log('💡 For production, consider using Upstash REST API directly');
-      
-      const mockRedis = {
-        get: async () => null,
-        set: async () => 'OK',
-        del: async () => 1,
-        exists: async () => 0,
-        expire: async () => 1,
-        ttl: async () => -1,
-        keys: async () => [],
-        flushdb: async () => 'OK',
-        ping: async () => 'PONG',
-        quit: async () => 'OK',
-        disconnect: () => {},
-        on: () => {},
-        off: () => {}
-      } as any;
-      
-      return mockRedis;
-    } else {
-      redis = new Redis(env.REDIS_URL, redisConfig);
-    }
+      // Upstash REST API URL'si ise farklı format kullan
+      let redis: Redis;
+      if (env.REDIS_URL.startsWith('https://') && env.REDIS_URL.includes('upstash.io')) {
+        // Upstash için doğru URL formatı
+        console.log('🌐 Using Upstash Redis with REST API');
+        console.log('🔗 Redis URL:', env.REDIS_URL);
+        console.log('🔑 Redis Password:', env.REDISPASSWORD ? '***' : 'undefined');
+        
+        // Upstash Redis için doğru URL formatı
+        const url = new URL(env.REDIS_URL);
+        const password = env.REDISPASSWORD || '';
+        
+        // Upstash Redis için Redis protokolü kullan
+        const redisUrl = `rediss://:${password}@${url.hostname}:6380`;
+        console.log('🔗 Formatted Redis URL:', redisUrl.replace(password, '***'));
+        
+        redis = new Redis(redisUrl, redisConfig);
+      } else {
+        redis = new Redis(env.REDIS_URL, redisConfig);
+      }
 
     // Handle connection events
     redis.on('connect', () => {
